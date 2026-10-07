@@ -10,11 +10,19 @@ public class Enemy : MonoBehaviour
     public float attackCooldown = 1f;
     private float attackTimer = 0f;
 
+    public float knockbackForce = 5f;
+    public float knockbackUpwardForce = 2f; 
+    public float knockbackDuration = 0.2f;
+
     private Transform player;
+    private Rigidbody2D rb;
+
+    private float knockbackTimer = 0f;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update()
@@ -22,25 +30,44 @@ public class Enemy : MonoBehaviour
         if (player == null)
             return;
 
+        attackTimer -= Time.deltaTime;
+
+        // If enemy is being knocked back, don't chase or attack
+        if (knockbackTimer > 0f)
+        {
+            knockbackTimer -= Time.deltaTime;
+            return;
+        }
+
         float distance = Vector2.Distance(transform.position, player.position);
 
-        attackTimer -= Time.deltaTime;
         if (distance > stopDistance)
         {
             Vector2 direction = (player.position - transform.position).normalized;
 
-            transform.position += (Vector3)(direction * moveSpeed * Time.deltaTime);
+            rb.linearVelocity = new Vector2(
+                direction.x * moveSpeed,
+                rb.linearVelocity.y
+            );
         }
-        else if (attackTimer <= 0f)
+        else
         {
-            PlayerController playerController = player.GetComponent<PlayerController>();
+            rb.linearVelocity = new Vector2(
+                0f,
+                rb.linearVelocity.y
+            );
 
-            if (playerController != null)
+            if (attackTimer <= 0f)
             {
-                playerController.TakeDamage(attackDamage);
-            }
+                PlayerController playerController = player.GetComponent<PlayerController>();
 
-            attackTimer = attackCooldown;
+                if (playerController != null)
+                {
+                    playerController.TakeDamage(attackDamage);
+                }
+
+                attackTimer = attackCooldown;
+            }
         }
     }
 
@@ -51,6 +78,21 @@ public class Enemy : MonoBehaviour
         if (health <= 0)
         {
             Destroy(gameObject);
+        }
+    }
+
+    public void Knockback(Vector2 direction)
+    {
+        if (rb != null)
+        {
+            knockbackTimer = knockbackDuration;
+
+            Vector2 knockback = new Vector2(
+                direction.x * knockbackForce,
+                knockbackUpwardForce
+            );
+
+            rb.linearVelocity = knockback;
         }
     }
 }
