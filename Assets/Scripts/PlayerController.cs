@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using UnityEngine.SceneManagement; 
 
 public class PlayerController : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class PlayerController : MonoBehaviour
     public float dodgeCooldown = 1f;
 
     [Header("Combat & Health")]
+    public int maxHealth = 5; 
     public int health = 5;
     public float attackCooldown = 0.4f;
     private float attackTimer = 0f;
@@ -40,6 +42,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         startPosition = transform.position;
+        health = maxHealth; // health starts @ max 
         
         // Fetch animator attached to the visual child
         animator = GetComponentInChildren<Animator>();
@@ -169,14 +172,18 @@ public class PlayerController : MonoBehaviour
 
         if (health <= 0)
         {
-            Respawn();
+            Die(); 
         }
     }
-
-    void Respawn()
+    void Die()
     {
-        health = 5;
-        transform.position = startPosition;
-        rb.linearVelocity = Vector2.zero;
+        SceneManager.LoadScene("MainMenu"); 
     }
+
+    // void Respawn()
+    // {
+    //     health = 5;
+    //     transform.position = startPosition;
+    //     rb.linearVelocity = Vector2.zero;
+    // }
 }

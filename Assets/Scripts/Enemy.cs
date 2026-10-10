@@ -2,83 +2,66 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public int health = 3;
+    [Header("Stats")]
+    public int maxHealth = 3; 
+    [HideInInspector] public int health = 3;
     public float moveSpeed = 2f;
     public float stopDistance = 1.5f;
 
+    [Header("Combat")]
     public int attackDamage = 1;
     public float attackCooldown = 1f;
-    private float attackTimer = 0f;
+    protected float attackTimer = 0f;
 
+    [Header("Knockback")]
     public float knockbackForce = 5f;
     public float knockbackUpwardForce = 2f; 
     public float knockbackDuration = 0.2f;
+    protected float knockbackTimer = 0f;
 
-    private Transform player;
-    private Rigidbody2D rb;
+    protected Transform player;
+    protected Rigidbody2D rb;
+    protected Animator anim;
 
-    private float knockbackTimer = 0f;
-
-    void Start()
+    protected virtual void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        health = maxHealth; 
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj != null)
+            player = playerObj.transform;
+            
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (player == null)
             return;
 
         attackTimer -= Time.deltaTime;
 
-        // If enemy is being knocked back, don't chase or attack
         if (knockbackTimer > 0f)
         {
             knockbackTimer -= Time.deltaTime;
             return;
         }
-
-        float distance = Vector2.Distance(transform.position, player.position);
-
-        if (distance > stopDistance)
-        {
-            Vector2 direction = (player.position - transform.position).normalized;
-
-            rb.linearVelocity = new Vector2(
-                direction.x * moveSpeed,
-                rb.linearVelocity.y
-            );
-        }
-        else
-        {
-            rb.linearVelocity = new Vector2(
-                0f,
-                rb.linearVelocity.y
-            );
-
-            if (attackTimer <= 0f)
-            {
-                PlayerController playerController = player.GetComponent<PlayerController>();
-
-                if (playerController != null)
-                {
-                    playerController.TakeDamage(attackDamage);
-                }
-
-                attackTimer = attackCooldown;
-            }
-        }
     }
 
-    public void TakeDamage(int damage)
+    // Virtual so child classes can add custom behavior (like hit animations)
+    public virtual void TakeDamage(int damage)
     {
         health -= damage;
 
         if (health <= 0)
         {
-            Destroy(gameObject);
+            Die();
         }
+    }
+
+    protected virtual void Die()
+    {
+        Destroy(gameObject);
     }
 
     public void Knockback(Vector2 direction)
