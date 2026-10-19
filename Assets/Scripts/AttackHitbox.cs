@@ -6,24 +6,21 @@ public class AttackHitbox : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // LOG 1: Checks if physics collision is actually firing
-        Debug.Log($"Hitbox touched: {other.name} (Tag: {other.tag})");
+        Debug.Log($"Hitbox touched: {other.name}");
 
-        if (other.CompareTag("Enemy"))
+        Enemy enemy = other.GetComponent<Enemy>();
+
+        if (enemy != null)
         {
-            Enemy enemy = other.GetComponentInParent<Enemy>();
+            enemy.TakeDamage(damage);
 
-            if (enemy != null)
-            {
-                enemy.TakeDamage(damage);
-                // LOG 2: Confirms TakeDamage was called
-                Debug.Log($"Successfully dealt {damage} damage to {enemy.name}!");
-            }
-            else
-            {
-                // LOG 3: Tag matched, but script missing
-                Debug.LogError($"Object {other.name} has 'Enemy' tag, but Enemy.cs script was not found!");
-            }
+            Debug.Log(
+                $"Successfully dealt {damage} damage to {enemy.name}!"
+            );
+        }
+        else
+        {
+            Debug.Log("The object touched does not have an Enemy script.");
         }
     }
 }
