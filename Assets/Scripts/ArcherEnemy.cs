@@ -1,38 +1,49 @@
 using UnityEngine;
 
-public class ArcherEnemy : MonoBehaviour
+public class ArcherEnemy : Enemy
 {
-    public Transform player;
+    [Header("Archer References")]
     public Transform arrowSpawn;
     public GameObject arrowPrefab;
 
-    [Header("Combat Settings")]
+    [Header("Archer Combat Settings")]
     public float attackRange = 8f;
-    public float attackCooldown = 2f;
 
-    [Header("Movement Settings")]
-    public float moveSpeed = 2f;
+    [Header("Archer Movement Settings")]
     public float preferredDistance = 8f;
     public float distanceTolerance = 0.5f;
 
-    private Animator animator;
-    private Rigidbody2D rb;
-    private float cooldownTimer;
-
-    private void Awake()
+    protected override void Start()
     {
-        animator = GetComponentInChildren<Animator>();
-        rb = GetComponent<Rigidbody2D>();
-    }
+        base.Start();
 
-    private void Update()
-    {
-        if (cooldownTimer > 0)
+        // The base Enemy script finds the Animator on the root.
+        // This also supports an Animator on a child object.
+        if (anim == null)
         {
-            cooldownTimer -= Time.deltaTime;
+            anim = GetComponentInChildren<Animator>();
         }
 
-        if (player == null)
+        if (arrowSpawn == null)
+        {
+            Debug.LogWarning(
+                "Arrow Spawn has not been assigned on the Archer."
+            );
+        }
+
+        if (arrowPrefab == null)
+        {
+            Debug.LogWarning(
+                "Arrow Prefab has not been assigned on the Archer."
+            );
+        }
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+
+        if (player == null || knockbackTimer > 0f)
         {
             return;
         }
@@ -43,7 +54,10 @@ public class ArcherEnemy : MonoBehaviour
             player.position.x - transform.position.x
         );
 
-        if (horizontalDistance <= attackRange && cooldownTimer <= 0)
+        if (
+            horizontalDistance <= attackRange &&
+            attackTimer <= 0f
+        )
         {
             Attack();
         }
@@ -51,7 +65,7 @@ public class ArcherEnemy : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (player == null)
+        if (player == null || rb == null || knockbackTimer > 0f)
         {
             return;
         }
@@ -59,28 +73,36 @@ public class ArcherEnemy : MonoBehaviour
         float horizontalDifference =
             player.position.x - transform.position.x;
 
-        float horizontalDistance = Mathf.Abs(horizontalDifference);
+        float horizontalDistance =
+            Mathf.Abs(horizontalDifference);
 
         float movementDirection = 0f;
 
-        // Move toward the player if they are too far away
-        if (horizontalDistance > preferredDistance + distanceTolerance)
+        // Move toward the player if too far away
+        if (
+            horizontalDistance >
+            preferredDistance + distanceTolerance
+        )
         {
             movementDirection = Mathf.Sign(horizontalDifference);
         }
-        // Move away from the player if they are too close
-        else if (horizontalDistance < preferredDistance - distanceTolerance)
+        // Move away from the player if too close
+        else if (
+            horizontalDistance <
+            preferredDistance - distanceTolerance
+        )
         {
             movementDirection = -Mathf.Sign(horizontalDifference);
         }
 
-        if (movementDirection != 0)
+        if (movementDirection != 0f)
         {
             Vector2 newPosition = rb.position;
 
-            newPosition.x += movementDirection *
-                             moveSpeed *
-                             Time.fixedDeltaTime;
+            newPosition.x +=
+                movementDirection *
+                moveSpeed *
+                Time.fixedDeltaTime;
 
             rb.MovePosition(newPosition);
         }
@@ -90,27 +112,57 @@ public class ArcherEnemy : MonoBehaviour
     {
         if (player.position.x < transform.position.x)
         {
-            transform.localScale = new Vector3(-1, 1, 1);
+            transform.localScale = new Vector3(
+                -Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
         }
         else
         {
-            transform.localScale = new Vector3(1, 1, 1);
+            transform.localScale = new Vector3(
+                Mathf.Abs(transform.localScale.x),
+                transform.localScale.y,
+                transform.localScale.z
+            );
         }
     }
 
     private void Attack()
     {
-        animator.SetTrigger("Attack");
+        if (anim != null)
+        {
+            anim.SetTrigger("Attack");
+        }
 
-        cooldownTimer = attackCooldown;
+        attackTimer = attackCooldown;
 
         Invoke(nameof(ShootArrow), 0.35f);
     }
 
     private void ShootArrow()
     {
-        Debug.Log("ShootArrow was called");
-        if (arrowPrefab == null || arrowSpawn == null || player == null)
+        Debug.Log("ShootArrow was called.");
+
+        if (arrowPrefab == null)
+        {
+            Debug.LogWarning(
+                "Cannot shoot: Arrow Prefab is missing."
+            );
+
+            return;
+        }
+
+        if (arrowSpawn == null)
+        {
+            Debug.LogWarning(
+                "Cannot shoot: Arrow Spawn is missing."
+            );
+
+            return;
+        }
+
+        if (player == null)
         {
             return;
         }
@@ -137,26 +189,23 @@ public class ArcherEnemy : MonoBehaviour
 
         if (player.position.x < transform.position.x)
         {
-            direction = -1;
+            direction = -1f;
         }
         else
         {
-            direction = 1;
+            direction = 1f;
         }
 
         arrow.SetDirection(direction);
     }
 
-    public void SetPlayer(Transform detectedPlayer)
+    public override void TakeDamage(int damage)
     {
-        player = detectedPlayer;
-    }
+        base.TakeDamage(damage);
 
-    public void ClearPlayer(Transform detectedPlayer)
-    {
-        if (player == detectedPlayer)
+        if (health > 0 && anim != null)
         {
-            player = null;
+            anim.SetTrigger("Hit");
         }
     }
 }

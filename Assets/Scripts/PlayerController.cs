@@ -21,9 +21,11 @@ public class PlayerController : MonoBehaviour
     public float slideCooldown = 1f;
 
     [Header("Wall Slide Settings")]
-    public Transform wallCheck;
+    public Transform wallCheckLeft;
+    public Transform wallCheckRight;
     public float wallCheckRadius = 0.15f;
     public float wallSlideSpeed = 2f;
+    public LayerMask wallLayer;
 
     [Header("Wall Jump Settings")]
     public float wallJumpHorizontalForce = 6f;
@@ -61,6 +63,9 @@ public class PlayerController : MonoBehaviour
     private bool isDead = false;
     private bool previousWallState = false;
 
+    private bool touchingLeftWall = false;
+    private bool touchingRightWall = false;
+
     // Components
     private Animator animator;
     private Rigidbody2D rb;
@@ -97,23 +102,43 @@ public class PlayerController : MonoBehaviour
                 groundLayer
             );
 
-        // Wall detection
-        IsTouchingWall =
-            wallCheck != null &&
+        // Left wall detection
+        touchingLeftWall =
+            wallCheckLeft != null &&
             Physics2D.OverlapCircle(
-                wallCheck.position,
+                wallCheckLeft.position,
                 wallCheckRadius,
-                groundLayer
+                wallLayer
             );
 
-        // Print only when wall detection changes
+        // Right wall detection
+        touchingRightWall =
+            wallCheckRight != null &&
+            Physics2D.OverlapCircle(
+                wallCheckRight.position,
+                wallCheckRadius,
+                wallLayer
+            );
+
+        // The player is touching a wall if either check detects one
+        IsTouchingWall = touchingLeftWall || touchingRightWall;
+
+        // Debug wall contact
         if (IsTouchingWall != previousWallState)
         {
-            Debug.Log("IsTouchingWall: " + IsTouchingWall);
+            if (IsTouchingWall)
+            {
+                Debug.Log("Player is touching a wall.");
+            }
+            else
+            {
+                Debug.Log("Player left the wall.");
+            }
+
             previousWallState = IsTouchingWall;
         }
 
-        // Determine wall sliding
+        // Determine whether the player is wall sliding
         IsWallSliding =
             IsTouchingWall &&
             !IsGrounded &&
@@ -121,7 +146,7 @@ public class PlayerController : MonoBehaviour
             !isAttacking &&
             !isSliding;
 
-        // Limit downward speed while sliding
+        // Limit downward speed while wall sliding
         if (IsWallSliding)
         {
             rb.linearVelocity = new Vector2(
@@ -153,6 +178,25 @@ public class PlayerController : MonoBehaviour
             HandleMovement();
         }
 
+        // Mirror the visual based on which wall is being touched
+        if (IsWallSliding && playerVisual != null)
+        {
+            Vector3 scale = playerVisual.transform.localScale;
+
+            if (touchingLeftWall)
+            {
+                // Wall is on the left, so face left
+                scale.x = Mathf.Abs(scale.x);
+            }
+            else if (touchingRightWall)
+            {
+                // Wall is on the right, so face right
+                scale.x = -Mathf.Abs(scale.x);
+            }
+
+            playerVisual.transform.localScale = scale;
+        }
+
         // Jump input
         if (
             Keyboard.current != null &&
@@ -174,7 +218,10 @@ public class PlayerController : MonoBehaviour
                     jumpForce
                 );
 
-                animator.SetTrigger("Jump");
+                if (animator != null)
+                {
+                    animator.SetTrigger("Jump");
+                }
             }
         }
 
@@ -235,7 +282,7 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // Face movement direction
+        // Face movement direction when normally moving
         if (playerVisual != null)
         {
             if (moveInput > 0f)
@@ -259,17 +306,42 @@ public class PlayerController : MonoBehaviour
 
     private void PerformWallJump()
     {
-        // If WallCheck is left of the player, jump right.
-        // If WallCheck is right of the player, jump left.
-        float jumpDirection =
-            wallCheck.position.x < transform.position.x
-            ? 1f
-            : -1f;
+        float jumpDirection;
+
+        // If touching the left wall, jump right
+        if (touchingLeftWall)
+        {
+            jumpDirection = 1f;
+            Debug.Log("wall jumping right from left wall");
+        }
+        // If touching the right wall, jump left
+        else
+        {
+            jumpDirection = -1f;
+            Debug.Log("wall jumping left from right wall");
+        }
 
         rb.linearVelocity = new Vector2(
             jumpDirection * wallJumpHorizontalForce,
             wallJumpVerticalForce
         );
+
+        // Face away from the wall after jumping
+        if (playerVisual != null)
+        {
+            Vector3 scale = playerVisual.transform.localScale;
+
+            if (touchingLeftWall)
+            {
+                scale.x = Mathf.Abs(scale.x);
+            }
+            else if (touchingRightWall)
+            {
+                scale.x = -Mathf.Abs(scale.x);
+            }
+
+            playerVisual.transform.localScale = scale;
+        }
 
         if (animator != null)
         {
@@ -411,12 +483,22 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        if (wallCheck != null)
+        if (wallCheckLeft != null)
         {
             Gizmos.color = Color.blue;
 
             Gizmos.DrawWireSphere(
-                wallCheck.position,
+                wallCheckLeft.position,
+                wallCheckRadius
+            );
+        }
+
+        if (wallCheckRight != null)
+        {
+            Gizmos.color = Color.cyan;
+
+            Gizmos.DrawWireSphere(
+                wallCheckRight.position,
                 wallCheckRadius
             );
         }

@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FinalLevel.unity
     guid: b125787402e9d4c5f82325f20b207cca
+  - enabled: 1
+    path: Assets/Scenes/ExitScreen.unity
+    guid: 344bc550228b54434b2931bb65640863
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
