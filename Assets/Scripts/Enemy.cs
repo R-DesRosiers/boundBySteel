@@ -59,8 +59,18 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    protected virtual void Die()
+   protected virtual void Die()
     {
+        if (player != null)
+        {
+            PlayerController playerController =
+                player.GetComponent<PlayerController>();
+
+            if (playerController != null)
+            {
+                playerController.RestoreFullHealth();
+            }
+        }
         Destroy(gameObject);
     }
 

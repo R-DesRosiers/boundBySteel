@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class ArcherEnemy : Enemy
 {
+    public AudioSource audioSource;
+    public AudioClip attackSound;
     [Header("Archer References")]
     public Transform arrowSpawn;
     public GameObject arrowPrefab;
@@ -130,6 +132,10 @@ public class ArcherEnemy : Enemy
 
     private void Attack()
     {
+        if (audioSource != null && attackSound != null)
+        {
+            audioSource.PlayOneShot(attackSound);
+        }
         if (anim != null)
         {
             anim.SetTrigger("Attack");

@@ -1,5 +1,6 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Required for loading scenes
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class LevelTransitionTrigger : MonoBehaviour
 {
@@ -7,26 +8,56 @@ public class LevelTransitionTrigger : MonoBehaviour
     [Tooltip("Name of the Unity scene to load when the player reaches this point")]
     public string nextSceneName;
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    [Header("Completion Audio")]
+    public AudioSource audioSource;
+    public AudioClip levelCompleteSound;
+    public float sceneChangeDelay = 1.5f;
+
+    private bool levelCompleted = false;
+
+    private void Start()
     {
-        // Check if the object hitting the trigger is the player
-        // (Assuming your player GameObject is tagged "Player")
-        if (collision.CompareTag("Player"))
+        if (audioSource == null)
         {
-            AdvanceToNextLevel();
+            audioSource = GetComponent<AudioSource>();
         }
     }
 
-    void AdvanceToNextLevel()
+    private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (
+            collision.CompareTag("Player") &&
+            !levelCompleted
+        )
+        {
+            levelCompleted = true;
+            StartCoroutine(AdvanceToNextLevel());
+        }
+    }
+
+    private IEnumerator AdvanceToNextLevel()
+    {
+        if (audioSource != null && levelCompleteSound != null)
+        {
+            audioSource.PlayOneShot(levelCompleteSound);
+        }
+
+        yield return new WaitForSeconds(sceneChangeDelay);
+
         if (!string.IsNullOrEmpty(nextSceneName))
         {
-            Debug.Log("Player reached the end! Loading next level: " + nextSceneName);
+            Debug.Log(
+                "Player reached the end! Loading next level: "
+                + nextSceneName
+            );
+
             SceneManager.LoadScene(nextSceneName);
         }
         else
         {
-            Debug.LogWarning("Next scene name is not set on the trigger!");
+            Debug.LogWarning(
+                "Next scene name is not set on the trigger!"
+            );
         }
     }
 }

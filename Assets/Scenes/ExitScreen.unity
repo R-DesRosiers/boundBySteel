@@ -151,10 +151,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 214861415}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -40}
-  m_SizeDelta: {x: 430.929, y: 72.348}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 430.929, y: 72.34799}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &128612795
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_text: Bound By Steel
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4f0938e28b43540bf9e4bd479e332560, type: 2}
-  m_sharedMaterial: {fileID: -2027469210627956730, guid: 4f0938e28b43540bf9e4bd479e332560, type: 2}
+  m_sharedMaterial: {fileID: 4862010964929873169, guid: 4f0938e28b43540bf9e4bd479e332560, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -203,8 +203,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -554,9 +554,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Play
-
-'
+  m_text: Back to Main Menu
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5c8bc5b0dc8f247b39df603de1dc322e, type: 2}
   m_sharedMaterial: {fileID: 6346786312236232667, guid: 5c8bc5b0dc8f247b39df603de1dc322e, type: 2}
@@ -600,7 +598,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -673,8 +671,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 487}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: 0, y: 500}
+  m_SizeDelta: {x: 480, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1570320591
 MonoBehaviour:
@@ -722,7 +720,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 162225696}
         m_TargetAssemblyTypeName: MainMenuController, Assembly-CSharp
-        m_MethodName: PlayGame
+        m_MethodName: BackToMainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

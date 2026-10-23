@@ -1,24 +1,25 @@
 using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawner Settings")]
-    public GameObject enemyPrefab;          
-    public Transform[] spawnPoints;         
-    public float spawnInterval = 4f;        
+    public GameObject enemyPrefab;
+    public Transform[] spawnPoints;
+    public float spawnInterval = 4f;
 
     [Header("Survival Timer")]
-    public float spawnDuration = 30f;       // How many seconds the spawner stays active
+    public float spawnDuration = 30f;
+
+    [Header("UI")]
+    public TextMeshProUGUI timerText;
 
     private bool isSpawning = true;
 
     void Start()
     {
-        // Start spawning ghosts
         StartCoroutine(SpawnRoutine());
-
-        // Start a countdown timer to shut the spawner down automatically
         StartCoroutine(StopSpawnerAfterTime(spawnDuration));
     }
 
@@ -28,7 +29,10 @@ public class EnemySpawner : MonoBehaviour
         {
             yield return new WaitForSeconds(spawnInterval);
 
-            if (enemyPrefab != null && spawnPoints.Length > 0 && isSpawning)
+            if (enemyPrefab != null &&
+                spawnPoints != null &&
+                spawnPoints.Length > 0 &&
+                isSpawning)
             {
                 SpawnAtRandomPoint();
             }
@@ -37,11 +41,28 @@ public class EnemySpawner : MonoBehaviour
 
     IEnumerator StopSpawnerAfterTime(float time)
     {
-        // Wait for the duration of the level/wave
-        yield return new WaitForSeconds(time);
+        float timeRemaining = time;
 
-        // Turn off the spawner
+        while (timeRemaining > 0f)
+        {
+            timeRemaining -= Time.deltaTime;
+
+            if (timerText != null)
+            {
+                timerText.text = "Enemies spawning: "
+                    + Mathf.CeilToInt(timeRemaining);
+            }
+
+            yield return null;
+        }
+
         StopSpawner();
+
+        if (timerText != null)
+        {
+            timerText.text = "Spawning complete!";
+        }
+
         Debug.Log("Spawner finished! Time's up.");
     }
 
@@ -49,7 +70,12 @@ public class EnemySpawner : MonoBehaviour
     {
         int randomIndex = Random.Range(0, spawnPoints.Length);
         Transform targetPoint = spawnPoints[randomIndex];
-        Instantiate(enemyPrefab, targetPoint.position, Quaternion.identity);
+
+        Instantiate(
+            enemyPrefab,
+            targetPoint.position,
+            Quaternion.identity
+        );
     }
 
     public void StopSpawner()

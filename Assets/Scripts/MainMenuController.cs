@@ -5,7 +5,6 @@ public class MainMenuController : MonoBehaviour
 {
     public void PlayGame()
     {
-        // Replace "GameScene" with the exact name of your main gameplay scene
         SceneManager.LoadScene("Game");
     }
 
@@ -13,5 +12,9 @@ public class MainMenuController : MonoBehaviour
     {
         Debug.Log("Quit Game pressed!");
         Application.Quit();
+    }
+    public void BackToMainMenu()
+    {
+        SceneManager.LoadScene(0);
     }
 }

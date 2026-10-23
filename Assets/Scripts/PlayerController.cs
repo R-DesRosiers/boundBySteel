@@ -6,6 +6,9 @@ using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Audio")]
+    public AudioSource audioSource; 
+    public AudioClip attackSound; 
     [Header("Death Screen")]
     public TMP_Text deathMessage;
     public float deathMessageDuration = 2f;
@@ -23,7 +26,7 @@ public class PlayerController : MonoBehaviour
     [Header("Wall Slide Settings")]
     public Transform wallCheckLeft;
     public Transform wallCheckRight;
-    public float wallCheckRadius = 0.15f;
+    public Vector2 wallCheckSize = new Vector2(0.2f, 1.2f);
     public float wallSlideSpeed = 2f;
     public LayerMask wallLayer;
 
@@ -51,7 +54,6 @@ public class PlayerController : MonoBehaviour
     public float groundCheckRadius = 0.15f;
     public bool IsGrounded;
 
-    // Private state variables
     private bool isSliding = false;
     private float slideTimer = 0f;
 
@@ -66,13 +68,16 @@ public class PlayerController : MonoBehaviour
     private bool touchingLeftWall = false;
     private bool touchingRightWall = false;
 
-    // Components
     private Animator animator;
     private Rigidbody2D rb;
     private Vector3 startPosition;
 
     private void Start()
     {
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
         rb = GetComponent<Rigidbody2D>();
 
         startPosition = transform.position;
@@ -102,25 +107,36 @@ public class PlayerController : MonoBehaviour
                 groundLayer
             );
 
-        // Left wall detection
-        touchingLeftWall =
-            wallCheckLeft != null &&
-            Physics2D.OverlapCircle(
+        // Left wall detection using a tall box
+        Collider2D leftWallHit = null;
+
+        if (wallCheckLeft != null)
+        {
+            leftWallHit = Physics2D.OverlapBox(
                 wallCheckLeft.position,
-                wallCheckRadius,
+                wallCheckSize,
+                0f,
                 wallLayer
             );
+        }
 
-        // Right wall detection
-        touchingRightWall =
-            wallCheckRight != null &&
-            Physics2D.OverlapCircle(
+        // Right wall detection using a tall box
+        Collider2D rightWallHit = null;
+
+        if (wallCheckRight != null)
+        {
+            rightWallHit = Physics2D.OverlapBox(
                 wallCheckRight.position,
-                wallCheckRadius,
+                wallCheckSize,
+                0f,
                 wallLayer
             );
+        }
 
-        // The player is touching a wall if either check detects one
+        touchingLeftWall = leftWallHit != null;
+        touchingRightWall = rightWallHit != null;
+
+        // Player is touching a wall if either check detects one
         IsTouchingWall = touchingLeftWall || touchingRightWall;
 
         // Debug wall contact
@@ -142,9 +158,21 @@ public class PlayerController : MonoBehaviour
         IsWallSliding =
             IsTouchingWall &&
             !IsGrounded &&
-            rb.linearVelocity.y < 0f &&
+            rb.linearVelocity.y <= 0f &&
             !isAttacking &&
             !isSliding;
+
+        if (IsTouchingWall)
+        {
+            Debug.Log(
+                "WallSliding: " + IsWallSliding +
+                " | TouchingWall: " + IsTouchingWall +
+                " | Grounded: " + IsGrounded +
+                " | Y Velocity: " + rb.linearVelocity.y +
+                " | Attacking: " + isAttacking +
+                " | Sliding: " + isSliding
+            );
+        }
 
         // Limit downward speed while wall sliding
         if (IsWallSliding)
@@ -178,19 +206,17 @@ public class PlayerController : MonoBehaviour
             HandleMovement();
         }
 
-        // Mirror the visual based on which wall is being touched
+        // Face the correct direction while wall sliding
         if (IsWallSliding && playerVisual != null)
         {
             Vector3 scale = playerVisual.transform.localScale;
 
             if (touchingLeftWall)
             {
-                // Wall is on the left, so face left
                 scale.x = Mathf.Abs(scale.x);
             }
             else if (touchingRightWall)
             {
-                // Wall is on the right, so face right
                 scale.x = -Mathf.Abs(scale.x);
             }
 
@@ -243,7 +269,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Animator parameters
+        // Update Animator parameters
         if (animator != null)
         {
             animator.SetBool("IsGrounded", IsGrounded);
@@ -282,7 +308,7 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // Face movement direction when normally moving
+        // Face movement direction
         if (playerVisual != null)
         {
             if (moveInput > 0f)
@@ -308,17 +334,17 @@ public class PlayerController : MonoBehaviour
     {
         float jumpDirection;
 
-        // If touching the left wall, jump right
+        // Jump right from the left wall
         if (touchingLeftWall)
         {
             jumpDirection = 1f;
-            Debug.Log("wall jumping right from left wall");
+            Debug.Log("Wall jumping right from left wall.");
         }
-        // If touching the right wall, jump left
+        // Jump left from the right wall
         else
         {
             jumpDirection = -1f;
-            Debug.Log("wall jumping left from right wall");
+            Debug.Log("Wall jumping left from right wall.");
         }
 
         rb.linearVelocity = new Vector2(
@@ -326,7 +352,7 @@ public class PlayerController : MonoBehaviour
             wallJumpVerticalForce
         );
 
-        // Face away from the wall after jumping
+        // Face away from the wall
         if (playerVisual != null)
         {
             Vector3 scale = playerVisual.transform.localScale;
@@ -384,6 +410,10 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack()
     {
+        if (audioSource != null && attackSound != null)
+        {
+            audioSource.PlayOneShot(attackSound);
+        }
         isAttacking = true;
 
         if (animator != null)
@@ -476,7 +506,6 @@ public class PlayerController : MonoBehaviour
         if (groundCheck != null)
         {
             Gizmos.color = Color.green;
-
             Gizmos.DrawWireSphere(
                 groundCheck.position,
                 groundCheckRadius
@@ -486,21 +515,23 @@ public class PlayerController : MonoBehaviour
         if (wallCheckLeft != null)
         {
             Gizmos.color = Color.blue;
-
-            Gizmos.DrawWireSphere(
+            Gizmos.DrawWireCube(
                 wallCheckLeft.position,
-                wallCheckRadius
+                wallCheckSize
             );
         }
 
         if (wallCheckRight != null)
         {
             Gizmos.color = Color.cyan;
-
-            Gizmos.DrawWireSphere(
+            Gizmos.DrawWireCube(
                 wallCheckRight.position,
-                wallCheckRadius
+                wallCheckSize
             );
         }
+    }
+    public void RestoreFullHealth()
+    {
+        health = maxHealth;
     }
 }
