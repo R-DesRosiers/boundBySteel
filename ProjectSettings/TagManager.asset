@@ -16,10 +16,10 @@ TagManager:
   - CameraBounds
   - Wall
   - Ground
-  - 
-  - 
-  - 
-  - 
+  - EnemyDetection
+  - Enemies
+  - PlayerAttack
+  - Ghost
   - 
   - 
   - 

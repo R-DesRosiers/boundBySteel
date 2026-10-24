@@ -107,7 +107,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 929f3aaf9f89c42ea8da624fa71bac07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArrowProjectile
-  speed: 8
+  speed: 10
   damage: 1
   lifetime: 4
 --- !u!50 &8801610394632368369

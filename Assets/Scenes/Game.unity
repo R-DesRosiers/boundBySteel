@@ -2687,10 +2687,6 @@ PrefabInstance:
       propertyPath: player
       value: 
       objectReference: {fileID: 112807880}
-    - target: {fileID: 3164918338017944814, guid: b5682b148d885486494a5ea7672a7214, type: 3}
-      propertyPath: m_Color.a
-      value: 0.78431374
-      objectReference: {fileID: 0}
     - target: {fileID: 3317203431632049222, guid: b5682b148d885486494a5ea7672a7214, type: 3}
       propertyPath: backgroundAudio
       value: 
@@ -2698,10 +2694,6 @@ PrefabInstance:
     - target: {fileID: 3359220068221586745, guid: b5682b148d885486494a5ea7672a7214, type: 3}
       propertyPath: m_Name
       value: PlayerHealthBar
-      objectReference: {fileID: 0}
-    - target: {fileID: 5038595180100190449, guid: b5682b148d885486494a5ea7672a7214, type: 3}
-      propertyPath: m_text
-      value: Paused
       objectReference: {fileID: 0}
     - target: {fileID: 8237936919910708902, guid: b5682b148d885486494a5ea7672a7214, type: 3}
       propertyPath: m_LocalPosition.x

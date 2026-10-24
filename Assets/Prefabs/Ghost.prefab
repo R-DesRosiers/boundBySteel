@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5278073859969258073}
   - component: {fileID: 904128578900668341}
   - component: {fileID: 5353410357027589521}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: Ghost
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -184,10 +184,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GhostEnemy
   maxHealth: 3
   health: 3
-  moveSpeed: 2
+  moveSpeed: 2.5
   stopDistance: 1.5
   attackDamage: 1
-  attackCooldown: 1
+  attackCooldown: 0.5
   knockbackForce: 5
   knockbackUpwardForce: 2
   knockbackDuration: 0.2

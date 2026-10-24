@@ -6,6 +6,15 @@ public class EnemySpawner : MonoBehaviour
 {
     [Header("Spawner Settings")]
     public GameObject enemyPrefab;
+
+    [Header("Optional Multiple Enemy Types")]
+    public bool useMultipleEnemyTypes = false;
+    public GameObject ghostPrefab;
+    public GameObject archerPrefab;
+
+    [Range(0f, 1f)]
+    public float archerSpawnChance = 0.5f;
+
     public Transform[] spawnPoints;
     public float spawnInterval = 4f;
 
@@ -17,29 +26,30 @@ public class EnemySpawner : MonoBehaviour
 
     private bool isSpawning = true;
 
-    void Start()
+    private void Start()
     {
         StartCoroutine(SpawnRoutine());
         StartCoroutine(StopSpawnerAfterTime(spawnDuration));
     }
 
-    IEnumerator SpawnRoutine()
+    private IEnumerator SpawnRoutine()
     {
         while (isSpawning)
         {
             yield return new WaitForSeconds(spawnInterval);
 
-            if (enemyPrefab != null &&
+            if (
                 spawnPoints != null &&
                 spawnPoints.Length > 0 &&
-                isSpawning)
+                isSpawning
+            )
             {
                 SpawnAtRandomPoint();
             }
         }
     }
 
-    IEnumerator StopSpawnerAfterTime(float time)
+    private IEnumerator StopSpawnerAfterTime(float time)
     {
         float timeRemaining = time;
 
@@ -49,8 +59,9 @@ public class EnemySpawner : MonoBehaviour
 
             if (timerText != null)
             {
-                timerText.text = "Enemies spawning: "
-                    + Mathf.CeilToInt(timeRemaining);
+                timerText.text =
+                    "Enemies spawning: " +
+                    Mathf.CeilToInt(timeRemaining);
             }
 
             yield return null;
@@ -66,16 +77,63 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log("Spawner finished! Time's up.");
     }
 
-    void SpawnAtRandomPoint()
+    private void SpawnAtRandomPoint()
     {
-        int randomIndex = Random.Range(0, spawnPoints.Length);
-        Transform targetPoint = spawnPoints[randomIndex];
+        GameObject prefabToSpawn = ChooseEnemyPrefab();
+
+        if (prefabToSpawn == null)
+        {
+            Debug.LogWarning(
+                "No enemy prefab is assigned to the spawner."
+            );
+
+            return;
+        }
+
+        int randomIndex =
+            Random.Range(0, spawnPoints.Length);
+
+        Transform targetPoint =
+            spawnPoints[randomIndex];
 
         Instantiate(
-            enemyPrefab,
+            prefabToSpawn,
             targetPoint.position,
             Quaternion.identity
         );
+    }
+
+    private GameObject ChooseEnemyPrefab()
+    {
+        // Single-enemy mode
+        if (!useMultipleEnemyTypes)
+        {
+            return enemyPrefab;
+        }
+
+        // If both enemy types are assigned, randomly choose
+        if (ghostPrefab != null && archerPrefab != null)
+        {
+            if (Random.value < archerSpawnChance)
+            {
+                return archerPrefab;
+            }
+
+            return ghostPrefab;
+        }
+
+        // Fallback if only one multiple-enemy prefab is assigned
+        if (ghostPrefab != null)
+        {
+            return ghostPrefab;
+        }
+
+        if (archerPrefab != null)
+        {
+            return archerPrefab;
+        }
+
+        return enemyPrefab;
     }
 
     public void StopSpawner()

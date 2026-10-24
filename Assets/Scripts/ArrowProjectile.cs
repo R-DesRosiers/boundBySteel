@@ -6,31 +6,30 @@ public class ArrowProjectile : MonoBehaviour
     public int damage = 1;
     public float lifetime = 4f;
 
-    private int direction = 1;
+    private Vector2 movementDirection = Vector2.right;
 
     private void Update()
     {
-        transform.Translate(
-            Vector2.right * direction * speed * Time.deltaTime
-        );
+        transform.position +=
+            (Vector3)(movementDirection * speed * Time.deltaTime);
 
         lifetime -= Time.deltaTime;
 
-        if (lifetime <= 0)
+        if (lifetime <= 0f)
         {
             Destroy(gameObject);
         }
     }
 
-    public void SetDirection(float newDirection)
+    public void SetTarget(Vector2 targetPosition)
     {
-        direction = newDirection < 0 ? -1 : 1;
+        movementDirection = (
+            targetPosition -
+            (Vector2)transform.position
+        ).normalized;
 
-        transform.localScale = new Vector3(
-            direction,
-            transform.localScale.y,
-            transform.localScale.z
-        );
+        // Makes the arrow point toward its target
+        transform.right = movementDirection;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -41,17 +40,18 @@ public class ArrowProjectile : MonoBehaviour
             return;
         }
 
-        if (other.CompareTag("Player"))
-        {
-            other.SendMessage(
-                "TakeDamage",
-                damage,
-                SendMessageOptions.DontRequireReceiver
-            );
+        PlayerController player =
+            other.GetComponentInParent<PlayerController>();
 
+        if (player != null)
+        {
+            player.TakeDamage(damage,transform.position);
             Destroy(gameObject);
+            return;
         }
-        else if (!other.isTrigger)
+
+        // Destroy the arrow when it hits a solid object
+        if (!other.isTrigger)
         {
             Destroy(gameObject);
         }

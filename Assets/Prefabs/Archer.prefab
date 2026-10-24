@@ -88,7 +88,7 @@ GameObject:
   - component: {fileID: 7190015487439681168}
   - component: {fileID: 6661947308601567053}
   - component: {fileID: 7426070771312766574}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Archer
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -140,7 +140,12 @@ MonoBehaviour:
   attackSound: {fileID: 8300000, guid: 7868d475d03ac48cd80f5708b6e785f8, type: 3}
   arrowSpawn: {fileID: 1547584752116975947}
   arrowPrefab: {fileID: 3579331343877048865, guid: 7313af47c16e04498b01008376d97d0a, type: 3}
-  attackRange: 8
+  attackRange: 10
+  twoArrowBurstChance: 0.35
+  burstDelay: 0.2
+  highArrowChance: 0.5
+  highArrowOffset: 0.8
+  lowArrowOffset: 0.15
   preferredDistance: 8
   distanceTolerance: 0.5
 --- !u!50 &7190015487439681168
@@ -239,7 +244,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6206676124701108682}
   - component: {fileID: 7455015209375640350}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: DetectionRange
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -451,7 +456,7 @@ Transform:
   m_GameObject: {fileID: 7476158241253242884}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.76, y: 3.06, z: 0}
+  m_LocalPosition: {x: 2.76, y: 3.42, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

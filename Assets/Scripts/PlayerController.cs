@@ -7,8 +7,9 @@ using TMPro;
 public class PlayerController : MonoBehaviour
 {
     [Header("Audio")]
-    public AudioSource audioSource; 
-    public AudioClip attackSound; 
+    public AudioSource audioSource;
+    public AudioClip attackSound;
+
     [Header("Death Screen")]
     public TMP_Text deathMessage;
     public float deathMessageDuration = 2f;
@@ -22,6 +23,12 @@ public class PlayerController : MonoBehaviour
     public float slideSpeed = 10f;
     public float slideDuration = 0.4f;
     public float slideCooldown = 1f;
+
+    [Header("Slide Collider")]
+    public BoxCollider2D playerCollider;
+
+    [Range(0.2f, 0.8f)]
+    public float slideHeightPercent = 0.5f;
 
     [Header("Wall Slide Settings")]
     public Transform wallCheckLeft;
@@ -43,6 +50,11 @@ public class PlayerController : MonoBehaviour
     public float attackCooldown = 0.4f;
     public GameObject sword;
 
+    [Header("Player Knockback")]
+    public float knockbackForce = 6f;
+    public float knockbackUpwardForce = 2f;
+    public float knockbackDuration = 0.2f;
+
     [Header("Attack Hitbox")]
     public GameObject attackHitbox;
     public float attackHitboxDuration = 0.15f;
@@ -63,6 +75,7 @@ public class PlayerController : MonoBehaviour
     private int attackIndex = 0;
 
     private bool isDead = false;
+    private float knockbackTimer = 0f;
     private bool previousWallState = false;
 
     private bool touchingLeftWall = false;
@@ -72,13 +85,34 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private Vector3 startPosition;
 
+    private Vector2 standingColliderSize;
+    private Vector2 standingColliderOffset;
+
     private void Start()
     {
         if (audioSource == null)
         {
             audioSource = GetComponent<AudioSource>();
         }
+
         rb = GetComponent<Rigidbody2D>();
+
+        if (playerCollider == null)
+        {
+            playerCollider = GetComponent<BoxCollider2D>();
+        }
+
+        if (playerCollider != null)
+        {
+            standingColliderSize = playerCollider.size;
+            standingColliderOffset = playerCollider.offset;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "PlayerController could not find a BoxCollider2D."
+            );
+        }
 
         startPosition = transform.position;
         health = maxHealth;
@@ -98,7 +132,13 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Ground detection
+        // Temporarily prevent normal movement during knockback
+        if (knockbackTimer > 0f)
+        {
+            knockbackTimer -= Time.deltaTime;
+            return;
+        }
+
         IsGrounded =
             groundCheck != null &&
             Physics2D.OverlapCircle(
@@ -107,7 +147,6 @@ public class PlayerController : MonoBehaviour
                 groundLayer
             );
 
-        // Left wall detection using a tall box
         Collider2D leftWallHit = null;
 
         if (wallCheckLeft != null)
@@ -120,7 +159,6 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // Right wall detection using a tall box
         Collider2D rightWallHit = null;
 
         if (wallCheckRight != null)
@@ -136,10 +174,10 @@ public class PlayerController : MonoBehaviour
         touchingLeftWall = leftWallHit != null;
         touchingRightWall = rightWallHit != null;
 
-        // Player is touching a wall if either check detects one
-        IsTouchingWall = touchingLeftWall || touchingRightWall;
+        IsTouchingWall =
+            touchingLeftWall ||
+            touchingRightWall;
 
-        // Debug wall contact
         if (IsTouchingWall != previousWallState)
         {
             if (IsTouchingWall)
@@ -154,7 +192,6 @@ public class PlayerController : MonoBehaviour
             previousWallState = IsTouchingWall;
         }
 
-        // Determine whether the player is wall sliding
         IsWallSliding =
             IsTouchingWall &&
             !IsGrounded &&
@@ -162,19 +199,6 @@ public class PlayerController : MonoBehaviour
             !isAttacking &&
             !isSliding;
 
-        if (IsTouchingWall)
-        {
-            Debug.Log(
-                "WallSliding: " + IsWallSliding +
-                " | TouchingWall: " + IsTouchingWall +
-                " | Grounded: " + IsGrounded +
-                " | Y Velocity: " + rb.linearVelocity.y +
-                " | Attacking: " + isAttacking +
-                " | Sliding: " + isSliding
-            );
-        }
-
-        // Limit downward speed while wall sliding
         if (IsWallSliding)
         {
             rb.linearVelocity = new Vector2(
@@ -183,11 +207,9 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // Update timers
         attackTimer -= Time.deltaTime;
         slideTimer -= Time.deltaTime;
 
-        // Ground slide
         if (
             Keyboard.current != null &&
             Keyboard.current.shiftKey.wasPressedThisFrame &&
@@ -200,13 +222,11 @@ public class PlayerController : MonoBehaviour
             StartCoroutine(Slide());
         }
 
-        // Normal movement
         if (!isSliding)
         {
             HandleMovement();
         }
 
-        // Face the correct direction while wall sliding
         if (IsWallSliding && playerVisual != null)
         {
             Vector3 scale = playerVisual.transform.localScale;
@@ -223,7 +243,6 @@ public class PlayerController : MonoBehaviour
             playerVisual.transform.localScale = scale;
         }
 
-        // Jump input
         if (
             Keyboard.current != null &&
             Keyboard.current.spaceKey.wasPressedThisFrame &&
@@ -231,12 +250,10 @@ public class PlayerController : MonoBehaviour
             !isAttacking
         )
         {
-            // Wall jump
             if (IsTouchingWall && !IsGrounded)
             {
                 PerformWallJump();
             }
-            // Normal ground jump
             else if (IsGrounded)
             {
                 rb.linearVelocity = new Vector2(
@@ -251,7 +268,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Attack input
         if (
             Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
@@ -269,7 +285,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Update Animator parameters
         if (animator != null)
         {
             animator.SetBool("IsGrounded", IsGrounded);
@@ -308,7 +323,6 @@ public class PlayerController : MonoBehaviour
             );
         }
 
-        // Face movement direction
         if (playerVisual != null)
         {
             if (moveInput > 0f)
@@ -334,13 +348,11 @@ public class PlayerController : MonoBehaviour
     {
         float jumpDirection;
 
-        // Jump right from the left wall
         if (touchingLeftWall)
         {
             jumpDirection = 1f;
             Debug.Log("Wall jumping right from left wall.");
         }
-        // Jump left from the right wall
         else
         {
             jumpDirection = -1f;
@@ -352,7 +364,6 @@ public class PlayerController : MonoBehaviour
             wallJumpVerticalForce
         );
 
-        // Face away from the wall
         if (playerVisual != null)
         {
             Vector3 scale = playerVisual.transform.localScale;
@@ -382,6 +393,8 @@ public class PlayerController : MonoBehaviour
         isSliding = true;
         slideTimer = slideCooldown;
 
+        SetSlidingCollider();
+
         if (animator != null)
         {
             animator.SetTrigger("Slide");
@@ -406,6 +419,44 @@ public class PlayerController : MonoBehaviour
         );
 
         isSliding = false;
+        RestoreStandingCollider();
+    }
+
+    private void SetSlidingCollider()
+    {
+        if (playerCollider == null)
+        {
+            return;
+        }
+
+        float newHeight =
+            standingColliderSize.y * slideHeightPercent;
+
+        playerCollider.size = new Vector2(
+            standingColliderSize.x,
+            newHeight
+        );
+
+        float heightDifference =
+            standingColliderSize.y - newHeight;
+
+        playerCollider.offset =
+            standingColliderOffset +
+            new Vector2(
+                0f,
+                -heightDifference / 2f
+            );
+    }
+
+    private void RestoreStandingCollider()
+    {
+        if (playerCollider == null)
+        {
+            return;
+        }
+
+        playerCollider.size = standingColliderSize;
+        playerCollider.offset = standingColliderOffset;
     }
 
     private IEnumerator Attack()
@@ -414,11 +465,16 @@ public class PlayerController : MonoBehaviour
         {
             audioSource.PlayOneShot(attackSound);
         }
+
         isAttacking = true;
 
         if (animator != null)
         {
-            animator.SetInteger("AttackIndex", attackIndex);
+            animator.SetInteger(
+                "AttackIndex",
+                attackIndex
+            );
+
             animator.SetTrigger("Attack");
         }
 
@@ -452,7 +508,9 @@ public class PlayerController : MonoBehaviour
 
         if (remainingAttackTime > 0f)
         {
-            yield return new WaitForSeconds(remainingAttackTime);
+            yield return new WaitForSeconds(
+                remainingAttackTime
+            );
         }
 
         isAttacking = false;
@@ -476,6 +534,45 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void TakeDamage(int damage, Vector2 attackerPosition)
+    {
+        TakeDamage(damage);
+
+        if (!isDead)
+        {
+            ApplyKnockback(attackerPosition);
+        }
+    }
+
+    public void ApplyKnockback(Vector2 attackerPosition)
+    {
+        if (rb == null || isDead)
+        {
+            return;
+        }
+
+        float horizontalDirection = Mathf.Sign(
+            transform.position.x - attackerPosition.x
+        );
+
+        if (horizontalDirection == 0f)
+        {
+            horizontalDirection = 1f;
+        }
+
+        rb.linearVelocity = new Vector2(
+            horizontalDirection * knockbackForce,
+            knockbackUpwardForce
+        );
+
+        knockbackTimer = knockbackDuration;
+    }
+
+    public void RestoreFullHealth()
+    {
+        health = maxHealth;
+    }
+
     private void Die()
     {
         if (isDead)
@@ -496,7 +593,9 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator DeathSequence()
     {
-        yield return new WaitForSeconds(deathMessageDuration);
+        yield return new WaitForSeconds(
+            deathMessageDuration
+        );
 
         SceneManager.LoadScene("MainMenu");
     }
@@ -506,6 +605,7 @@ public class PlayerController : MonoBehaviour
         if (groundCheck != null)
         {
             Gizmos.color = Color.green;
+
             Gizmos.DrawWireSphere(
                 groundCheck.position,
                 groundCheckRadius
@@ -515,6 +615,7 @@ public class PlayerController : MonoBehaviour
         if (wallCheckLeft != null)
         {
             Gizmos.color = Color.blue;
+
             Gizmos.DrawWireCube(
                 wallCheckLeft.position,
                 wallCheckSize
@@ -524,14 +625,11 @@ public class PlayerController : MonoBehaviour
         if (wallCheckRight != null)
         {
             Gizmos.color = Color.cyan;
+
             Gizmos.DrawWireCube(
                 wallCheckRight.position,
                 wallCheckSize
             );
         }
-    }
-    public void RestoreFullHealth()
-    {
-        health = maxHealth;
     }
 }

@@ -49,7 +49,7 @@ public class GhostEnemy : Enemy
                 PlayerController playerController = player.GetComponent<PlayerController>();
                 if (playerController != null)
                 {
-                    playerController.TakeDamage(attackDamage);
+                    playerController.TakeDamage(attackDamage,transform.position);
                 }
                 attackTimer = attackCooldown;
             }

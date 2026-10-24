@@ -1,15 +1,30 @@
 using UnityEngine;
+using System.Collections;
 
 public class ArcherEnemy : Enemy
 {
+    [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip attackSound;
+
     [Header("Archer References")]
     public Transform arrowSpawn;
     public GameObject arrowPrefab;
 
     [Header("Archer Combat Settings")]
     public float attackRange = 8f;
+
+    [Range(0f, 1f)]
+    public float twoArrowBurstChance = 0.35f;
+
+    public float burstDelay = 0.2f;
+
+    [Header("Arrow Height Settings")]
+    [Range(0f, 1f)]
+    public float highArrowChance = 0.5f;
+
+    public float highArrowOffset = 0.8f;
+    public float lowArrowOffset = 0.15f;
 
     [Header("Archer Movement Settings")]
     public float preferredDistance = 8f;
@@ -19,8 +34,6 @@ public class ArcherEnemy : Enemy
     {
         base.Start();
 
-        // The base Enemy script finds the Animator on the root.
-        // This also supports an Animator on a child object.
         if (anim == null)
         {
             anim = GetComponentInChildren<Animator>();
@@ -67,7 +80,11 @@ public class ArcherEnemy : Enemy
 
     private void FixedUpdate()
     {
-        if (player == null || rb == null || knockbackTimer > 0f)
+        if (
+            player == null ||
+            rb == null ||
+            knockbackTimer > 0f
+        )
         {
             return;
         }
@@ -136,6 +153,7 @@ public class ArcherEnemy : Enemy
         {
             audioSource.PlayOneShot(attackSound);
         }
+
         if (anim != null)
         {
             anim.SetTrigger("Attack");
@@ -143,13 +161,30 @@ public class ArcherEnemy : Enemy
 
         attackTimer = attackCooldown;
 
-        Invoke(nameof(ShootArrow), 0.35f);
+        Invoke(nameof(BeginArrowBurst), 0.35f);
+    }
+
+    private void BeginArrowBurst()
+    {
+        StartCoroutine(ShootArrowBurst());
+    }
+
+    private IEnumerator ShootArrowBurst()
+    {
+        // Always fire the first arrow
+        ShootArrow();
+
+        // Sometimes fire a second arrow
+        if (Random.value <= twoArrowBurstChance)
+        {
+            yield return new WaitForSeconds(burstDelay);
+
+            ShootArrow();
+        }
     }
 
     private void ShootArrow()
     {
-        Debug.Log("ShootArrow was called.");
-
         if (arrowPrefab == null)
         {
             Debug.LogWarning(
@@ -173,6 +208,18 @@ public class ArcherEnemy : Enemy
             return;
         }
 
+        float arrowHeightOffset;
+
+        if (Random.value <= highArrowChance)
+        {
+            arrowHeightOffset = highArrowOffset;
+        }
+        else
+        {
+            arrowHeightOffset = lowArrowOffset;
+        }
+
+        // Arrow starts at the archer's bow
         GameObject newArrow = Instantiate(
             arrowPrefab,
             arrowSpawn.position,
@@ -191,18 +238,13 @@ public class ArcherEnemy : Enemy
             return;
         }
 
-        float direction;
+        // Aim toward either the player's head or lower body
+        Vector2 targetPosition = new Vector2(
+            player.position.x,
+            player.position.y + arrowHeightOffset
+        );
 
-        if (player.position.x < transform.position.x)
-        {
-            direction = -1f;
-        }
-        else
-        {
-            direction = 1f;
-        }
-
-        arrow.SetDirection(direction);
+        arrow.SetTarget(targetPosition);
     }
 
     public override void TakeDamage(int damage)
