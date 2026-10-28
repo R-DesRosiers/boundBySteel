@@ -10,13 +10,13 @@ public class EnemyHealthBar : MonoBehaviour
 
     void Start()
     {
-        // Automatically finds the Enemy component on the parent
+        // Automatically finds the enemy component on the parent
         enemy = GetComponentInParent<Enemy>();
     }
 
     void Update()
     {
-        // Dynamically update the health bar fill amount
+        // update health bar fill amt 
         if (enemy != null && healthBarFill != null)
         {
             float healthPercent = (float)enemy.health / enemy.maxHealth;

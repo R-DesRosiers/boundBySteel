@@ -24,7 +24,7 @@ public class Enemy : MonoBehaviour
     protected Animator anim;
 
     protected virtual void Start()
-    {
+    { // sets up health, finds object w player tag, etc. 
         health = maxHealth; 
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
@@ -48,7 +48,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    // Virtual so child classes can add custom behavior (like hit animations)
+    // Virtual so child classes can add custom behavior
     public virtual void TakeDamage(int damage)
     {
         health -= damage;
@@ -75,7 +75,7 @@ public class Enemy : MonoBehaviour
     }
 
     public void Knockback(Vector2 direction)
-    {
+    { // knocks enemy (vertical & horizontal) when hit 
         if (rb != null)
         {
             knockbackTimer = knockbackDuration;

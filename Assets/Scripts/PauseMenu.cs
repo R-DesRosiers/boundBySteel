@@ -31,7 +31,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     private void Update()
-    {
+    { // listens for escape key to be pressed by player 
         if (
             Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame
@@ -49,21 +49,21 @@ public class PauseMenu : MonoBehaviour
     }
 
     public void PauseGame()
-    {
+    { // STOPS / FREEZES gameplay and displays pause panel of buttons / darkened background 
         isPaused = true;
         pausePanel.SetActive(true);
         Time.timeScale = 0f;
     }
 
     public void ResumeGame()
-    {
+    { // hides pause panel and resumes gameplay 
         isPaused = false;
         pausePanel.SetActive(false);
         Time.timeScale = 1f;
     }
 
     public void ToggleMute()
-    {
+    { // have forest noise as background, per requirements that can be muted 
         isMuted = !isMuted;
 
         if (backgroundAudio != null)
@@ -75,7 +75,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     private void UpdateMuteButtonText()
-    {
+    { // if clicked --> switch text for button 
         if (muteButtonText != null)
         {
             muteButtonText.text =
@@ -92,7 +92,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     public void BackToMainMenu()
-    {
+    { // go back to zeroth / first scene (which is main menu in this case)
         Time.timeScale = 1f;
         SceneManager.LoadScene(0);
     }

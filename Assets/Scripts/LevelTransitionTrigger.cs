@@ -13,6 +13,7 @@ public class LevelTransitionTrigger : MonoBehaviour
     public AudioClip levelCompleteSound;
     public float sceneChangeDelay = 1.5f;
 
+    private bool playerInsideExit = false;
     private bool levelCompleted = false;
 
     private void Start()
@@ -23,41 +24,88 @@ public class LevelTransitionTrigger : MonoBehaviour
         }
     }
 
+    // Methods for collider entering and exiting the transition area
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (
-            collision.CompareTag("Player") &&
-            !levelCompleted
-        )
+        if (collision.CompareTag("Player"))
         {
-            levelCompleted = true;
-            StartCoroutine(AdvanceToNextLevel());
+            playerInsideExit = true;
+            TryAdvanceToNextLevel();
         }
     }
 
-    private IEnumerator AdvanceToNextLevel()
+    private void OnTriggerExit2D(Collider2D collision)
     {
-        if (audioSource != null && levelCompleteSound != null)
+        if (collision.CompareTag("Player"))
         {
-            audioSource.PlayOneShot(levelCompleteSound);
+            playerInsideExit = false;
+        }
+    }
+
+    private void Update()
+    {
+        if (playerInsideExit && !levelCompleted)
+        {
+            TryAdvanceToNextLevel();
+        }
+    }
+
+    private void TryAdvanceToNextLevel()
+    {
+        if (levelCompleted)
+        {
+            return;
         }
 
-        yield return new WaitForSeconds(sceneChangeDelay);
-
-        if (!string.IsNullOrEmpty(nextSceneName))
-        {
-            Debug.Log(
-                "Player reached the end! Loading next level: "
-                + nextSceneName
-            );
-
-            SceneManager.LoadScene(nextSceneName);
-        }
-        else
+        if (string.IsNullOrEmpty(nextSceneName))
         {
             Debug.LogWarning(
                 "Next scene name is not set on the trigger!"
             );
+
+            return;
+        }
+
+        Enemy[] remainingEnemies =
+            FindObjectsByType<Enemy>();
+
+        if (remainingEnemies.Length > 0)
+        {
+            return;
+        }
+
+        levelCompleted = true;
+
+        Debug.Log(
+            "All enemies defeated! Loading next level: "
+            + nextSceneName
+        );
+
+        // Play sound and load next scene
+        StartCoroutine(AdvanceToNextLevel());
+    }
+
+    private IEnumerator AdvanceToNextLevel()
+    {
+        if (
+            audioSource != null &&
+            levelCompleteSound != null
+        )
+        {
+            audioSource.PlayOneShot(levelCompleteSound);
+        }
+
+        yield return new WaitForSeconds(
+            sceneChangeDelay
+        );
+
+        if (SceneFader.Instance != null)
+        {
+            SceneFader.Instance.LoadSceneWithFade(nextSceneName);
+        }
+        else
+        {
+            SceneManager.LoadScene(nextSceneName);
         }
     }
 }

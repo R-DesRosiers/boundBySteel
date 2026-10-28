@@ -20,7 +20,7 @@ TagManager:
   - Enemies
   - PlayerAttack
   - Ghost
-  - 
+  - PlayerBody
   - 
   - 
   - 
@@ -42,6 +42,9 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Foreground
+    uniqueID: 4222482515
     locked: 0
   - name: Background
     uniqueID: 796052411

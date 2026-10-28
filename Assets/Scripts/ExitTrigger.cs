@@ -12,6 +12,7 @@ public class ExitTrigger : MonoBehaviour
     [SerializeField] private AudioClip levelCompleteSound;
     [SerializeField] private float sceneChangeDelay = 1.5f;
 
+    private bool playerInsideExit = false;
     private bool levelCompleted = false;
 
     private void Start()
@@ -24,25 +25,85 @@ public class ExitTrigger : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (
-            other.CompareTag("Player") &&
-            !levelCompleted
-        )
+        if (other.CompareTag("Player"))
         {
-            levelCompleted = true;
-            StartCoroutine(CompleteLevel());
+            playerInsideExit = true;
+            TryCompleteLevel();
         }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerInsideExit = false;
+        }
+    }
+
+    private void Update()
+    {
+        // Level ends only when all enemies are gone
+        // and the player is inside the exit.
+        if (playerInsideExit && !levelCompleted)
+        {
+            TryCompleteLevel();
+        }
+    }
+
+    private void TryCompleteLevel()
+    {
+        if (levelCompleted)
+        {
+            return;
+        }
+
+        Enemy[] remainingEnemies =
+            FindObjectsByType<Enemy>();
+
+        if (remainingEnemies.Length > 0)
+        {
+            return;
+        }
+
+        levelCompleted = true;
+
+        Debug.Log(
+            "All enemies defeated! Completing final level."
+        );
+
+        StartCoroutine(CompleteLevel());
     }
 
     private IEnumerator CompleteLevel()
     {
-        if (audioSource != null && levelCompleteSound != null)
+        if (
+            audioSource != null &&
+            levelCompleteSound != null
+        )
         {
             audioSource.PlayOneShot(levelCompleteSound);
         }
 
-        yield return new WaitForSeconds(sceneChangeDelay);
+        yield return new WaitForSeconds(
+            sceneChangeDelay
+        );
 
-        SceneManager.LoadScene(nextSceneName);
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            if (SceneFader.Instance != null)
+            {
+                SceneFader.Instance.LoadSceneWithFade(nextSceneName);
+            }
+            else
+            {
+                SceneManager.LoadScene(nextSceneName);
+            }
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Next scene name is not assigned."
+            );
+        }
     }
 }

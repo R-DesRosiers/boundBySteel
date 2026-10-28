@@ -21,22 +21,121 @@ public class EnemySpawner : MonoBehaviour
     [Header("Survival Timer")]
     public float spawnDuration = 30f;
 
+    [Header("Timer Warning")]
+    public AudioClip timerWarningSound;
+    public float warningTime = 10f;
+
     [Header("UI")]
     public TextMeshProUGUI timerText;
+    public TextMeshProUGUI roundText;
 
-    private bool isSpawning = true;
+    [Header("Round Introduction")]
+    public AudioSource audioSource;
+    public AudioClip roundAnnouncement;
+    public int roundNumber = 1;
+    public float extraDelayAfterAnnouncement = 0.2f;
+
+    [Header("Round References")]
+    public PlayerController playerController;
+
+    private bool isSpawning = false;
+    private bool timerWarningPlayed = false;
+    private bool roundStarted = false;
 
     private void Start()
     {
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+
+        isSpawning = false;
+        timerWarningPlayed = false;
+        roundStarted = false;
+
+        if (roundText != null)
+        {
+            roundText.gameObject.SetActive(false);
+        }
+
+        if (timerText != null)
+        {
+            timerText.text = "";
+        }
+    }
+
+    public void StartRound()
+    { // start spawning, this way it would only begin after the zoom in is done 
+        if (roundStarted) 
+        {
+            return;
+        }
+
+        roundStarted = true;
+        isSpawning = true;
+        timerWarningPlayed = false;
+
+        StartCoroutine(BeginRound());
+    }
+
+    private IEnumerator BeginRound()
+    {
+        if (roundText != null)
+        {
+            roundText.text = "ROUND " + roundNumber;
+            roundText.gameObject.SetActive(true);
+        }
+
+        if (
+            audioSource != null &&
+            roundAnnouncement != null
+        )
+        {
+            audioSource.PlayOneShot(roundAnnouncement);
+
+            yield return new WaitForSecondsRealtime(
+                roundAnnouncement.length
+            );
+        }
+        else
+        {
+            yield return new WaitForSecondsRealtime(1f);
+        }
+
+        if (roundText != null)
+        {
+            roundText.gameObject.SetActive(false);
+        }
+
+        yield return new WaitForSecondsRealtime(
+            extraDelayAfterAnnouncement
+        );
+
         StartCoroutine(SpawnRoutine());
-        StartCoroutine(StopSpawnerAfterTime(spawnDuration));
+
+        StartCoroutine(
+            StopSpawnerAfterTime(spawnDuration)
+        );
+
+        if (playerController != null)
+        {
+            playerController.SetControlsLocked(false);
+        }
+        else
+        {
+            Debug.LogWarning(
+                "EnemySpawner does not have a PlayerController assigned."
+            );
+        }
     }
 
     private IEnumerator SpawnRoutine()
-    {
+    { // respawns enemies every x seconds 
         while (isSpawning)
         {
-            yield return new WaitForSeconds(spawnInterval);
+            yield return new WaitForSeconds(
+                spawnInterval
+            );
 
             if (
                 spawnPoints != null &&
@@ -57,6 +156,24 @@ public class EnemySpawner : MonoBehaviour
         {
             timeRemaining -= Time.deltaTime;
 
+            if (
+                !timerWarningPlayed &&
+                timeRemaining <= warningTime
+            )
+            {
+                if (
+                    audioSource != null &&
+                    timerWarningSound != null
+                )
+                {
+                    audioSource.PlayOneShot(
+                        timerWarningSound
+                    );
+                }
+
+                timerWarningPlayed = true;
+            }
+
             if (timerText != null)
             {
                 timerText.text =
@@ -74,12 +191,16 @@ public class EnemySpawner : MonoBehaviour
             timerText.text = "Spawning complete!";
         }
 
-        Debug.Log("Spawner finished! Time's up.");
+        Debug.Log(
+            "Spawner finished! Time's up."
+        );
     }
 
     private void SpawnAtRandomPoint()
-    {
-        GameObject prefabToSpawn = ChooseEnemyPrefab();
+    { // use enemy prefabs to spawn in one of the created spawn points 
+    // pick random one out of list^ 
+        GameObject prefabToSpawn =
+            ChooseEnemyPrefab();
 
         if (prefabToSpawn == null)
         {
@@ -104,15 +225,16 @@ public class EnemySpawner : MonoBehaviour
     }
 
     private GameObject ChooseEnemyPrefab()
-    {
-        // Single-enemy mode
+    { // now we can do multiple enemies 
         if (!useMultipleEnemyTypes)
         {
             return enemyPrefab;
         }
 
-        // If both enemy types are assigned, randomly choose
-        if (ghostPrefab != null && archerPrefab != null)
+        if (
+            ghostPrefab != null &&
+            archerPrefab != null
+        )
         {
             if (Random.value < archerSpawnChance)
             {
@@ -122,7 +244,6 @@ public class EnemySpawner : MonoBehaviour
             return ghostPrefab;
         }
 
-        // Fallback if only one multiple-enemy prefab is assigned
         if (ghostPrefab != null)
         {
             return ghostPrefab;

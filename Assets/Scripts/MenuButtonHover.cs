@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 
 public class MenuButtonHover : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler
-{
+{ // 
     public float hoverScale = 1.08f;
     public float speed = 10f;
 
@@ -26,12 +26,12 @@ public class MenuButtonHover : MonoBehaviour,
     }
 
     public void OnPointerEnter(PointerEventData eventData)
-    {
+    { // enlarge the button a little when hovering over it 
         targetScale = normalScale * hoverScale;
     }
 
     public void OnPointerExit(PointerEventData eventData)
-    {
+    { // then return button size back to normal when exiting 
         targetScale = normalScale;
     }
 }

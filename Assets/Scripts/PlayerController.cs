@@ -3,12 +3,14 @@ using UnityEngine.InputSystem;
 using System.Collections;
 using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.EventSystems;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip attackSound;
+    public AudioClip youLoseSound;
 
     [Header("Death Screen")]
     public TMP_Text deathMessage;
@@ -75,6 +77,8 @@ public class PlayerController : MonoBehaviour
     private int attackIndex = 0;
 
     private bool isDead = false;
+    private bool controlsLocked = true;
+
     private float knockbackTimer = 0f;
     private bool previousWallState = false;
 
@@ -132,7 +136,27 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Temporarily prevent normal movement during knockback
+        // Do not process movement or attack input while the pause menu is open.
+        if (Time.timeScale <= 0f)
+        {
+            return;
+        }
+
+        if (controlsLocked)
+        {
+            rb.linearVelocity = new Vector2(
+                0f,
+                rb.linearVelocity.y
+            );
+
+            if (animator != null)
+            {
+                animator.SetBool("IsRunning", false);
+            }
+
+            return;
+        }
+
         if (knockbackTimer > 0f)
         {
             knockbackTimer -= Time.deltaTime;
@@ -271,7 +295,8 @@ public class PlayerController : MonoBehaviour
         if (
             Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
-            !isSliding
+            !isSliding &&
+            !IsPointerOverUI()
         )
         {
             if (isAttacking)
@@ -461,6 +486,12 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack()
     {
+        // Final safety check before playing the attack sound.
+        if (isDead || controlsLocked || Time.timeScale <= 0f)
+        {
+            yield break;
+        }
+
         if (audioSource != null && attackSound != null)
         {
             audioSource.PlayOneShot(attackSound);
@@ -524,6 +555,37 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private bool IsPointerOverUI()
+    {
+        return EventSystem.current != null &&
+               EventSystem.current.IsPointerOverGameObject();
+    }
+
+    public void SetControlsLocked(bool locked)
+    {
+        controlsLocked = locked;
+
+        if (locked)
+        {
+            isSliding = false;
+            isAttacking = false;
+            attackQueued = false;
+
+            if (attackHitbox != null)
+            {
+                attackHitbox.SetActive(false);
+            }
+
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(
+                    0f,
+                    rb.linearVelocity.y
+                );
+            }
+        }
+    }
+
     public void TakeDamage(int damage)
     {
         health -= damage;
@@ -534,7 +596,10 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void TakeDamage(int damage, Vector2 attackerPosition)
+    public void TakeDamage(
+        int damage,
+        Vector2 attackerPosition
+    )
     {
         TakeDamage(damage);
 
@@ -552,7 +617,8 @@ public class PlayerController : MonoBehaviour
         }
 
         float horizontalDirection = Mathf.Sign(
-            transform.position.x - attackerPosition.x
+            transform.position.x -
+            attackerPosition.x
         );
 
         if (horizontalDirection == 0f)
@@ -581,6 +647,15 @@ public class PlayerController : MonoBehaviour
         }
 
         isDead = true;
+
+        if (
+            audioSource != null &&
+            youLoseSound != null
+        )
+        {
+            audioSource.PlayOneShot(youLoseSound);
+        }
+
         rb.linearVelocity = Vector2.zero;
 
         if (deathMessage != null)

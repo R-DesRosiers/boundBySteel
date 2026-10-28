@@ -30,9 +30,24 @@ public class ArcherEnemy : Enemy
     public float preferredDistance = 8f;
     public float distanceTolerance = 0.5f;
 
+    [Header("Ground Detection")]
+    public LayerMask groundLayer;
+    public float groundCheckDistance = 0.15f;
+
+    private Collider2D bodyCollider;
+
     protected override void Start()
     {
         base.Start();
+        // set up collider & arrows 
+        bodyCollider = GetComponent<Collider2D>();
+
+        if (bodyCollider == null)
+        {
+            Debug.LogWarning(
+                "Archer could not find a Collider2D for ground detection."
+            );
+        }
 
         if (anim == null)
         {
@@ -58,7 +73,11 @@ public class ArcherEnemy : Enemy
     {
         base.Update();
 
-        if (player == null || knockbackTimer > 0f)
+        if (
+            player == null ||
+            knockbackTimer > 0f ||
+            !IsGrounded()
+        )
         {
             return;
         }
@@ -83,7 +102,8 @@ public class ArcherEnemy : Enemy
         if (
             player == null ||
             rb == null ||
-            knockbackTimer > 0f
+            knockbackTimer > 0f ||
+            !IsGrounded()
         )
         {
             return;
@@ -97,7 +117,8 @@ public class ArcherEnemy : Enemy
 
         float movementDirection = 0f;
 
-        // Move toward the player if too far away
+        // distances use attack range (circle that will detect player if inside)
+        // Move toward if too far
         if (
             horizontalDistance >
             preferredDistance + distanceTolerance
@@ -105,7 +126,7 @@ public class ArcherEnemy : Enemy
         {
             movementDirection = Mathf.Sign(horizontalDifference);
         }
-        // Move away from the player if too close
+        // Move away if too close
         else if (
             horizontalDistance <
             preferredDistance - distanceTolerance
@@ -125,6 +146,37 @@ public class ArcherEnemy : Enemy
 
             rb.MovePosition(newPosition);
         }
+    }
+
+    private bool IsGrounded()
+    { // to check if its grounded (that way it doesn't move mid air)
+        if (bodyCollider == null)
+        {
+            return false;
+        }
+
+        Bounds bounds = bodyCollider.bounds;
+
+        Vector2 boxCenter = new Vector2(
+            bounds.center.x,
+            bounds.min.y
+        );
+
+        Vector2 boxSize = new Vector2(
+            bounds.size.x * 0.8f,
+            0.05f
+        );
+
+        RaycastHit2D groundHit = Physics2D.BoxCast(
+            boxCenter,
+            boxSize,
+            0f,
+            Vector2.down,
+            groundCheckDistance,
+            groundLayer
+        );
+
+        return groundHit.collider != null;
     }
 
     private void FacePlayer()
@@ -148,7 +200,7 @@ public class ArcherEnemy : Enemy
     }
 
     private void Attack()
-    {
+    { // attack (vary arrow numbers (bursts), and play bow sound)
         if (audioSource != null && attackSound != null)
         {
             audioSource.PlayOneShot(attackSound);
@@ -171,10 +223,10 @@ public class ArcherEnemy : Enemy
 
     private IEnumerator ShootArrowBurst()
     {
-        // Always fire the first arrow
+        // always 1 arrow! 
         ShootArrow();
 
-        // Sometimes fire a second arrow
+        // sometimes add a second arrow
         if (Random.value <= twoArrowBurstChance)
         {
             yield return new WaitForSeconds(burstDelay);
@@ -219,7 +271,6 @@ public class ArcherEnemy : Enemy
             arrowHeightOffset = lowArrowOffset;
         }
 
-        // Arrow starts at the archer's bow
         GameObject newArrow = Instantiate(
             arrowPrefab,
             arrowSpawn.position,
@@ -238,7 +289,6 @@ public class ArcherEnemy : Enemy
             return;
         }
 
-        // Aim toward either the player's head or lower body
         Vector2 targetPosition = new Vector2(
             player.position.x,
             player.position.y + arrowHeightOffset
@@ -255,5 +305,29 @@ public class ArcherEnemy : Enemy
         {
             anim.SetTrigger("Hit");
         }
+    }
+
+    // visualize the body collider by drawing it 
+    private void OnDrawGizmosSelected()
+    {
+        if (bodyCollider == null)
+        {
+            return;
+        }
+
+        Bounds bounds = bodyCollider.bounds;
+
+        Gizmos.color = Color.yellow;
+
+        Gizmos.DrawWireCube(
+            new Vector2(
+                bounds.center.x,
+                bounds.min.y - groundCheckDistance / 2f
+            ),
+            new Vector2(
+                bounds.size.x * 0.8f,
+                groundCheckDistance
+            )
+        );
     }
 }

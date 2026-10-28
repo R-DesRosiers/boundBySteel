@@ -25,6 +25,7 @@ public class AttackHitbox : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        // debugging statements to help fix bugs 
         Debug.Log(
             "Hitbox touched: " + other.name +
             " | Tag: " + other.tag +
