@@ -8,6 +8,9 @@ public class PauseMenu : MonoBehaviour
     [Header("Pause Menu")]
     public GameObject pausePanel;
 
+    [Header("Gameplay Text")]
+    public TMP_Text enemiesSpawningText;
+
     [Header("Background Audio")]
     public AudioSource backgroundAudio;
 
@@ -19,7 +22,16 @@ public class PauseMenu : MonoBehaviour
 
     private void Start()
     {
-        pausePanel.SetActive(false);
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(false);
+        }
+
+        if (enemiesSpawningText != null)
+        {
+            enemiesSpawningText.enabled = true;
+        }
+
         Time.timeScale = 1f;
 
         if (backgroundAudio != null)
@@ -31,7 +43,8 @@ public class PauseMenu : MonoBehaviour
     }
 
     private void Update()
-    { // listens for escape key to be pressed by player 
+    {
+        // Listen for the Escape key
         if (
             Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame
@@ -49,21 +62,44 @@ public class PauseMenu : MonoBehaviour
     }
 
     public void PauseGame()
-    { // STOPS / FREEZES gameplay and displays pause panel of buttons / darkened background 
+    {
+        // Pause gameplay and show the pause menu
         isPaused = true;
-        pausePanel.SetActive(true);
+
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(true);
+        }
+
+        if (enemiesSpawningText != null)
+        {
+            enemiesSpawningText.enabled = false;
+        }
+
         Time.timeScale = 0f;
     }
 
     public void ResumeGame()
-    { // hides pause panel and resumes gameplay 
+    {
+        // Hide the pause menu and resume gameplay
         isPaused = false;
-        pausePanel.SetActive(false);
+
+        if (pausePanel != null)
+        {
+            pausePanel.SetActive(false);
+        }
+
+        if (enemiesSpawningText != null)
+        {
+            enemiesSpawningText.enabled = true;
+        }
+
         Time.timeScale = 1f;
     }
 
     public void ToggleMute()
-    { // have forest noise as background, per requirements that can be muted 
+    {
+        // Mute or unmute the background forest audio
         isMuted = !isMuted;
 
         if (backgroundAudio != null)
@@ -75,11 +111,13 @@ public class PauseMenu : MonoBehaviour
     }
 
     private void UpdateMuteButtonText()
-    { // if clicked --> switch text for button 
+    {
         if (muteButtonText != null)
         {
             muteButtonText.text =
-                isMuted ? "Unmute Music" : "Mute Music";
+                isMuted
+                ? "Unmute Background Noise"
+                : "Mute Background Noise";
         }
     }
 
@@ -92,7 +130,7 @@ public class PauseMenu : MonoBehaviour
     }
 
     public void BackToMainMenu()
-    { // go back to zeroth / first scene (which is main menu in this case)
+    {
         Time.timeScale = 1f;
         SceneManager.LoadScene(0);
     }

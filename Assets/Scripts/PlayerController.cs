@@ -59,6 +59,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Attack Hitbox")]
     public GameObject attackHitbox;
+    public float attackHitboxDelay = 0.1f;
     public float attackHitboxDuration = 0.15f;
     public float attackDuration = 0.6f;
 
@@ -136,7 +137,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Do not process movement or attack input while the pause menu is open.
+        // Do not process movement or attack input while paused.
         if (Time.timeScale <= 0f)
         {
             return;
@@ -486,7 +487,6 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Attack()
     {
-        // Final safety check before playing the attack sound.
         if (isDead || controlsLocked || Time.timeScale <= 0f)
         {
             yield break;
@@ -516,18 +516,22 @@ public class PlayerController : MonoBehaviour
             attackIndex = 0;
         }
 
+        // Delay the hitbox so it lines up with the sword animation.
+        if (attackHitboxDelay > 0f)
+        {
+            yield return new WaitForSeconds(
+                attackHitboxDelay
+            );
+        }
+
         if (attackHitbox != null)
         {
             attackHitbox.SetActive(true);
         }
 
-        float elapsed = 0f;
-
-        while (elapsed < attackHitboxDuration)
-        {
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
+        yield return new WaitForSeconds(
+            attackHitboxDuration
+        );
 
         if (attackHitbox != null)
         {
@@ -535,7 +539,9 @@ public class PlayerController : MonoBehaviour
         }
 
         float remainingAttackTime =
-            attackDuration - attackHitboxDuration;
+            attackDuration -
+            attackHitboxDelay -
+            attackHitboxDuration;
 
         if (remainingAttackTime > 0f)
         {

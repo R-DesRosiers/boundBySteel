@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6230695694385255533}
   - component: {fileID: 4699365736764292227}
   - component: {fileID: 2909719211461992361}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: AttackHitbox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -102,7 +102,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5335527072237840794}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: WallCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -136,7 +136,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6883139128229531729}
   - component: {fileID: 3567031329434887341}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: swordSound
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -264,7 +264,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1541397389661871824}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: GroundCheck
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -295,7 +295,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4230863461552344723}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: WallCheckRight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -328,7 +328,7 @@ GameObject:
   - component: {fileID: 8522889742619299194}
   - component: {fileID: 5177318992793887854}
   - component: {fileID: 3696988373231567704}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: PlayerVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -397,7 +397,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1279974245
-  m_SortingLayer: 2
+  m_SortingLayer: 3
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1896038472, guid: 71b5baaf243cb462ba234e6a1ded74d0, type: 3}
@@ -442,7 +442,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7653569924536125417}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: WallCheckLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -477,7 +477,7 @@ GameObject:
   - component: {fileID: 7924485002647921247}
   - component: {fileID: 6288891851069237406}
   - component: {fileID: 3126551123678043399}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -590,6 +590,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   audioSource: {fileID: 3567031329434887341}
   attackSound: {fileID: 8300000, guid: 798eb0893af524213a5058cfc7cf5692, type: 3}
+  youLoseSound: {fileID: 8300000, guid: d403ae8a1979c494cbdb18f0be116d9b, type: 3}
   deathMessage: {fileID: 0}
   deathMessageDuration: 2
   moveSpeed: 6
@@ -598,6 +599,8 @@ MonoBehaviour:
   slideSpeed: 10
   slideDuration: 0.4
   slideCooldown: 1
+  playerCollider: {fileID: 0}
+  slideHeightPercent: 0.5
   wallCheckLeft: {fileID: 7653569924536125417}
   wallCheckRight: {fileID: 4230863461552344723}
   wallCheckSize: {x: 0.2, y: 1.7}
@@ -613,7 +616,11 @@ MonoBehaviour:
   health: 5
   attackCooldown: 0.4
   sword: {fileID: 1018952401924841969}
+  knockbackForce: 6
+  knockbackUpwardForce: 2
+  knockbackDuration: 0.2
   attackHitbox: {fileID: 1018952401924841969}
+  attackHitboxDelay: 0.05
   attackHitboxDuration: 0.1
   attackDuration: 0.6
   groundCheck: {fileID: 1541397389661871824}
